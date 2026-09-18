@@ -1,0 +1,24 @@
+Steel Nomad / Стальной кочевник
+
+Selected combat effects:
+Pixel Art Assets — Will Tice / unTied Games
+Super Pixel Effects Gigapack (Free Version)
+
+Nine selected sprite sheets are bundled as part of this game only:
+scifi_muzzle_flash_001_small_yellow
+scifi_muzzle_flash_003_small_yellow
+directional_impact_001_small_blue
+scifi_spark_burst_001_small_yellow
+stylized_explosion_001_small_yellow
+symmetrical_explosion_001_small_orange
+symmetrical_explosion_002_small_orange
+epic_explosion_001_small_orange
+symmetrical_explosion_004_large_orange
+
+Do not redistribute the original asset pack as a standalone library.
+
+Interface font (all in-game text):
+Ark Pixel 16px (c) TakWolf
+Licensed under the SIL Open Font License 1.1.
+Subset to Latin + Cyrillic and bundled as fonts/ArkPixel16-Regular.ttf
+License: fonts/ArkPixel16-OFL.txt

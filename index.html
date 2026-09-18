@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#171b1c" />
+    <title>Стальной кочевник</title>
+    <script type="module" crossorigin src="./assets/index-BCyBCj2s.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-D-Gt3tC2.css">
+  </head>
+  <body>
+    <main id="app" aria-label="Стальной кочевник">
+      <div id="play-area">
+        <div id="game" aria-label="Диагностическая игровая сцена"></div>
+      </div>
+      <div id="sticky-banner-anchor" aria-hidden="true"></div>
+
+      <section id="rotate-screen" role="status" aria-live="polite">
+        <div class="rotate-device" aria-hidden="true">
+          <span class="rotate-device-screen"></span>
+          <span class="rotate-device-arrow">↻</span>
+        </div>
+        <h1 id="rotate-title"></h1>
+        <p id="rotate-subtitle"></p>
+      </section>
+
+      <section id="splash" aria-live="polite">
+        <div id="splash-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div id="splash-bar"><div id="splash-fill"></div></div>
+        <div id="splash-text"></div>
+      </section>
+    </main>
+
+    <script>
+      document.addEventListener('contextmenu', (event) => event.preventDefault());
+      document.addEventListener('selectstart', (event) => event.preventDefault());
+      document.addEventListener('touchmove', (event) => event.preventDefault(), { passive: false });
+    </script>
+  </body>
+</html>

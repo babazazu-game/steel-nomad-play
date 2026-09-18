@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Карточка форпоста — раскладка</title>
+<style>
+  @font-face {
+    font-family: 'PixelHud';
+    src: url('/fonts/ArkPixel12-Regular.ttf') format('truetype');
+    font-display: block;
+  }
+
+  :root {
+    --rim: #0b0f10;
+    --plate-dark: #2c3639;
+    --plate-face: #3c484c;
+    --plate-lip: #232b2d;
+    --rivet: #b8763d;
+    --brass: #f1b84b;
+    --cream: #f4ead2;
+    --cyan: #54e2d7;
+    --body-text: #f0dcc0;
+    --panel-face: #333d40;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #1b2224;
+    color: var(--cream);
+    font: 13px/1.4 'Segoe UI', 'Noto Sans', system-ui, Arial, sans-serif;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ---- controls ------------------------------------------------------- */
+  #controls {
+    width: 300px;
+    flex: none;
+    padding: 14px 16px 40px;
+    background: #141a1c;
+    border-right: 2px solid #0b0f10;
+    overflow-y: auto;
+    height: 100vh;
+  }
+
+  #controls h1 { font-size: 15px; margin: 0 0 4px; }
+  #controls p.hint { color: #9fb0b3; font-size: 12px; margin: 0 0 14px; }
+  fieldset { border: 1px solid #2c3639; border-radius: 3px; margin: 0 0 12px; padding: 8px 10px 10px; }
+  legend { color: var(--brass); font-size: 12px; padding: 0 4px; }
+  label { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 12px; }
+  label span { flex: 1; }
+  input[type=number] { width: 62px; background: #0f1416; color: var(--cream); border: 1px solid #2c3639; padding: 3px 5px; font: inherit; }
+  input[type=range] { width: 110px; }
+  button {
+    background: var(--brass); color: #171b1c; border: 0; padding: 7px 10px;
+    font: 600 13px/1 'Segoe UI', system-ui, Arial, sans-serif; cursor: pointer; width: 100%;
+  }
+  button.secondary { background: #4a585c; color: var(--cream); margin-top: 6px; }
+  #out {
+    width: 100%; height: 150px; margin-top: 8px; background: #0f1416; color: #9fe6df;
+    border: 1px solid #2c3639; font: 11px/1.35 ui-monospace, Consolas, monospace; padding: 6px;
+  }
+
+  /* ---- stage ---------------------------------------------------------- */
+  #stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: auto;
+    background:
+      repeating-linear-gradient(45deg, #23292b 0 12px, #1f2527 12px 24px);
+  }
+
+  /* The riveted plate, built the same way `steel-panel.ts` builds it. */
+  .plate {
+    position: relative;
+    background: var(--plate-face);
+    border: 2px solid var(--plate-dark);
+    outline: 2px solid var(--rim);
+  }
+  .plate::after {
+    content: '';
+    position: absolute; left: 2px; right: 2px; bottom: 1px; height: 3px;
+    background: var(--plate-lip);
+  }
+  .notch { position: absolute; left: 2px; top: 2px; height: 3px; background: var(--brass); }
+  .rivet { position: absolute; width: 3px; height: 3px; background: var(--rivet); }
+
+  #panel { position: relative; background: var(--panel-face); }
+  #panel .title, #panel .subtitle { position: absolute; left: 0; right: 0; text-align: center; }
+  #panel .title { font-family: 'PixelHud', monospace; font-weight: 700; color: var(--cream); }
+  #panel .subtitle { color: #e4c99f; font-weight: 600; }
+
+  .card { position: absolute; }
+  .card .el { position: absolute; left: 0; right: 0; text-align: center; cursor: grab; }
+  .card .el.dragging { cursor: grabbing; }
+  .card .el:hover { outline: 1px dashed rgba(84, 226, 215, .55); }
+  .kind { color: var(--brass); font-weight: 700; }
+  .name { font-family: 'PixelHud', monospace; font-weight: 700; color: var(--cream); }
+  .target { color: var(--cyan); font-weight: 700; }
+  .body { color: var(--body-text); font-weight: 600; }
+  .stat { color: var(--cream); font-weight: 700; }
+
+  .window {
+    position: absolute; cursor: grab;
+    background: #1b2223; border: 2px solid var(--plate-lip);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .window img { image-rendering: pixelated; }
+  .window .grip {
+    position: absolute; right: 0; bottom: 0; width: 14px; height: 14px;
+    background: var(--cyan); opacity: .75; cursor: nwse-resize;
+  }
+  .choose {
+    position: absolute; cursor: grab;
+    background: var(--brass); color: #171b1c; border: 2px solid var(--rim);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<div id="controls">
+  <h1>Раскладка карточки</h1>
+  <p class="hint">Тащите любой элемент мышью — двигается только по вертикали. Окно картинки тянется за бирюзовый угол. Числа внизу передайте мне, я перенесу в игру один в один.</p>
+
+  <fieldset>
+    <legend>Панель</legend>
+    <label><span>ширина</span><input type="number" id="panelWidth" step="2"></label>
+    <label><span>отступ до карточек</span><input type="number" id="cardTop" step="1"></label>
+    <label><span>поле снизу</span><input type="number" id="panelPad" step="1"></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Карточка</legend>
+    <label><span>ширина</span><input type="number" id="cardWidth" step="2"></label>
+    <label><span>высота</span><input type="number" id="cardHeight" step="2"></label>
+    <label><span>зазор между</span><input type="number" id="cardGap" step="1"></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Кегли</legend>
+    <label><span>заголовок</span><input type="range" id="titleSize" min="12" max="28"><b id="titleSizeV"></b></label>
+    <label><span>мелкий текст</span><input type="range" id="bodySize" min="10" max="18"><b id="bodySizeV"></b></label>
+    <label><span>шаг строк чисел</span><input type="range" id="statStep" min="12" max="28"><b id="statStepV"></b></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Что показать в карточках</legend>
+    <label><span>худший случай (много текста)</span><input type="checkbox" id="worstCase"></label>
+  </fieldset>
+
+  <button id="copy">Скопировать числа</button>
+  <button class="secondary" id="reset">Сбросить к текущему в игре</button>
+  <textarea id="out" readonly></textarea>
+</div>
+
+<div id="stage"><div id="panel" class="plate"></div></div>
+
+<script>
+// Values as the game has them right now, so the study opens on what is live.
+const DEFAULTS = {
+  panelWidth: 780, cardTop: 92, panelPad: 16,
+  cardWidth: 236, cardHeight: 366, cardGap: 16,
+  titleSize: 15, bodySize: 14, statStep: 18,
+  artY: -151, artWidth: 204, artHeight: 127,
+  kindY: -178, nameY: -14, targetY: 17, bodyY: 43, statsY: 81,
+  buttonWidth: 120, buttonHeight: 30, buttonY: 133,
+};
+
+const state = { ...DEFAULTS };
+
+// Three cards, chosen to span the range: an acquisition with no target and no
+// numbers, the same with a longer name, and a module that carries everything.
+const CARDS = [
+  { kind: 'ПРИЦЕП', name: 'ПУЛЕМЁТНАЯ ПЛАТФОРМА', target: '', body: 'Новый прицеп ранга 1 с прочностью 90.', stats: [], art: 'trailer-machinegun' },
+  { kind: 'ПРИЦЕП', name: 'ОГНЕВАЯ ПЛАТФОРМА', target: '', body: 'Новый прицеп ранга 1 с прочностью 90.', stats: [], art: 'trailer-flamer' },
+  { kind: 'МОДУЛЬ', name: 'ОХЛАЖДЕНИЕ', target: 'ДРОН 1 · ШЕРШЕНЬ', body: 'Занимает модульный слот.', stats: ['УРОН/С 55.2 > 66.2', 'ИНТЕРВАЛ 145 > 121'], art: 'drone' },
+];
+
+const WORST = [
+  { kind: 'СПЕЦИАЛИЗАЦИЯ', name: 'ТЯЖЁЛЫЙ СТВОЛ', target: 'ПРИЦЕП 4 · ПУЛЕМЁТ', body: 'Вторичных целей +2, площадь x1.20, прямой урон x0.85.', stats: ['УРОН 11.5 > 17.3', 'УРОН/С 22.1 > 26.5', 'ЗАМЕНИТ: ОХЛАЖДЕНИЕ'], art: 'trailer-machinegun' },
+  { kind: 'БРОНЯ', name: 'ПРОТИВОУДАРНАЯ БРОНЯ', target: '', body: 'Броня тягача +10 п.п. Ранг 1 из 3.', stats: ['БРОНЯ 0 > 10'], art: 'tractor' },
+  { kind: 'МОДУЛЬ', name: 'БРОНЕПЛИТЫ', target: 'ПРИЦЕП 2 · ОГНЕМЁТ', body: 'Занимает модульный слот.', stats: ['ПРОЧНОСТЬ 90 > 108', 'БРОНЯ 0 > 15', 'ЗАМЕНИТ: ОПТИКА'], art: 'module-plating' },
+];
+
+const panel = document.getElementById('panel');
+
+function render() {
+  const cards = document.getElementById('worstCase').checked ? WORST : CARDS;
+  const panelHeight = state.cardTop + state.cardHeight + state.panelPad;
+  panel.style.width = state.panelWidth + 'px';
+  panel.style.height = panelHeight + 'px';
+  panel.innerHTML = '';
+
+  const notch = document.createElement('div');
+  notch.className = 'notch';
+  notch.style.width = '96px';
+  panel.append(notch);
+  for (const [x, y] of [[3, 4], [null, 4], [3, null], [null, null]]) {
+    const rivet = document.createElement('div');
+    rivet.className = 'rivet';
+    if (x === null) rivet.style.right = '5px'; else rivet.style.left = x + 'px';
+    if (y === null) rivet.style.bottom = '6px'; else rivet.style.top = y + 'px';
+    panel.append(rivet);
+  }
+
+  const title = document.createElement('div');
+  title.className = 'title';
+  title.textContent = 'ФОРПОСТ ДОСТИГНУТ';
+  title.style.cssText = `top:${34 - 14}px;font-size:24px`;
+  const subtitle = document.createElement('div');
+  subtitle.className = 'subtitle';
+  subtitle.textContent = 'Конвой полностью отремонтирован. Выберите одно улучшение бесплатно.';
+  subtitle.style.cssText = `top:${66 - 9}px;font-size:${state.bodySize}px`;
+  panel.append(title, subtitle);
+
+  const rowWidth = cards.length * state.cardWidth + (cards.length - 1) * state.cardGap;
+  cards.forEach((data, index) => {
+    const half = state.cardHeight / 2;
+    const card = document.createElement('div');
+    card.className = 'card plate';
+    card.style.cssText = `width:${state.cardWidth}px;height:${state.cardHeight}px;`
+      + `left:${(state.panelWidth - rowWidth) / 2 + index * (state.cardWidth + state.cardGap)}px;top:${state.cardTop}px`;
+
+    const cardNotch = document.createElement('div');
+    cardNotch.className = 'notch';
+    cardNotch.style.width = '22px';
+    card.append(cardNotch);
+
+    card.append(element('kind', data.kind, state.bodySize, 'kindY', half));
+
+    const window_ = document.createElement('div');
+    window_.className = 'window';
+    window_.dataset.key = 'artY';
+    window_.style.cssText = `width:${state.artWidth}px;height:${state.artHeight}px;`
+      + `left:${(state.cardWidth - state.artWidth) / 2}px;top:${half + state.artY}px`;
+    const img = document.createElement('img');
+    img.src = `/card-study/${data.art}.png`;
+    img.style.maxWidth = (state.artWidth - 16) + 'px';
+    img.style.maxHeight = (state.artHeight - 16) + 'px';
+    const grip = document.createElement('div');
+    grip.className = 'grip';
+    window_.append(img, grip);
+    card.append(window_);
+
+    card.append(element('name', data.name, state.titleSize, 'nameY', half));
+    if (data.target) card.append(element('target', data.target, state.bodySize, 'targetY', half));
+    card.append(element('body', data.body, state.bodySize, 'bodyY', half));
+    data.stats.forEach((text, row) => {
+      const stat = element('stat', text, state.bodySize, 'statsY', half);
+      stat.style.top = (half + state.statsY + row * state.statStep) + 'px';
+      if (row > 0) stat.dataset.key = '';
+      card.append(stat);
+    });
+
+    const button = document.createElement('div');
+    button.className = 'choose';
+    button.dataset.key = 'buttonY';
+    button.textContent = 'ВЫБРАТЬ';
+    button.style.cssText = `width:${state.buttonWidth}px;height:${state.buttonHeight}px;`
+      + `left:${(state.cardWidth - state.buttonWidth) / 2}px;top:${half + state.buttonY}px;font-size:${state.bodySize}px`;
+    card.append(button);
+
+    panel.append(card);
+  });
+
+  document.getElementById('out').value = JSON.stringify({
+    OUTPOST_PANEL_WIDTH: state.panelWidth,
+    OUTPOST_CARD_TOP: state.cardTop,
+    OUTPOST_PANEL_PAD: state.panelPad,
+    CARD_WIDTH: state.cardWidth,
+    CARD_HEIGHT: state.cardHeight,
+    CARD_GAP: state.cardGap,
+    OVERLAY_TITLE_SIZE: state.titleSize,
+    OVERLAY_BODY_SIZE: state.bodySize,
+    ART_TOP: state.artY + state.cardHeight / 2,
+    CARD_ART_WIDTH: state.artWidth,
+    CARD_ART_HEIGHT: state.artHeight,
+    KIND_Y: state.kindY,
+    BAND_NAME: state.nameY,
+    BAND_TARGET: state.targetY,
+    BAND_BODY: state.bodyY,
+    BAND_STATS: state.statsY,
+    BAND_STAT_STEP: state.statStep,
+    BUTTON_TOP: state.buttonY,
+    BUTTON_WIDTH: state.buttonWidth,
+    BUTTON_HEIGHT: state.buttonHeight,
+  }, null, 2);
+}
+
+/**
+ * `key` names a value measured from the card's centre; `half` converts it to
+ * the CSS top edge. TEXT_INSET matches the word-wrap widths the scene uses, so
+ * a line breaks here exactly where it breaks in the game.
+ */
+const TEXT_INSET = 12;
+
+function element(className, text, size, key, half) {
+  const node = document.createElement('div');
+  node.className = `el ${className}`;
+  node.dataset.key = key;
+  node.textContent = text;
+  node.style.top = (half + state[key]) + 'px';
+  node.style.left = TEXT_INSET + 'px';
+  node.style.right = TEXT_INSET + 'px';
+  node.style.fontSize = size + 'px';
+
+  return node;
+}
+
+// ---- dragging ---------------------------------------------------------------
+let drag = null;
+
+panel.addEventListener('pointerdown', (event) => {
+  const grip = event.target.closest('.grip');
+  const node = event.target.closest('[data-key]');
+  if (grip) {
+    drag = { mode: 'resize', startY: event.clientY, startX: event.clientX, w: state.artWidth, h: state.artHeight };
+  } else if (node && node.dataset.key) {
+    drag = { mode: 'move', key: node.dataset.key, startY: event.clientY, start: state[node.dataset.key] };
+    node.classList.add('dragging');
+  } else {
+    return;
+  }
+  event.preventDefault();
+  panel.setPointerCapture(event.pointerId);
+});
+
+panel.addEventListener('pointermove', (event) => {
+  if (!drag) return;
+  if (drag.mode === 'resize') {
+    state.artWidth = Math.min(state.cardWidth - 8, Math.max(60, Math.round(drag.w + (event.clientX - drag.startX) * 2)));
+    state.artHeight = Math.max(40, Math.round(drag.h + (event.clientY - drag.startY)));
+  } else {
+    state[drag.key] = Math.round(drag.start + (event.clientY - drag.startY));
+  }
+  render();
+});
+
+panel.addEventListener('pointerup', () => { drag = null; });
+
+// ---- controls ---------------------------------------------------------------
+const NUMBERS = {
+  panelWidth: 'panelWidth', cardTop: 'cardTop', panelPad: 'panelPad',
+  cardWidth: 'cardWidth', cardHeight: 'cardHeight', cardGap: 'cardGap',
+};
+const RANGES = { titleSize: 'titleSize', bodySize: 'bodySize', statStep: 'statStep' };
+
+function syncControls() {
+  for (const key of Object.keys(NUMBERS)) document.getElementById(key).value = state[key];
+  for (const key of Object.keys(RANGES)) {
+    document.getElementById(key).value = state[key];
+    document.getElementById(key + 'V').textContent = state[key];
+  }
+}
+
+for (const key of Object.keys(NUMBERS)) {
+  document.getElementById(key).addEventListener('input', (event) => {
+    state[key] = Number(event.target.value) || 0;
+    render();
+  });
+}
+for (const key of Object.keys(RANGES)) {
+  document.getElementById(key).addEventListener('input', (event) => {
+    state[key] = Number(event.target.value);
+    document.getElementById(key + 'V').textContent = state[key];
+    render();
+  });
+}
+document.getElementById('worstCase').addEventListener('change', render);
+document.getElementById('copy').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(document.getElementById('out').value);
+  const button = document.getElementById('copy');
+  button.textContent = 'Скопировано — присылайте мне';
+  setTimeout(() => { button.textContent = 'Скопировать числа'; }, 1600);
+});
+document.getElementById('reset').addEventListener('click', () => {
+  Object.assign(state, DEFAULTS);
+  syncControls();
+  render();
+});
+
+document.fonts.load('24px PixelHud').then(render);
+syncControls();
+render();
+</script>
+</body>
+</html>
