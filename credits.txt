@@ -18,7 +18,7 @@ symmetrical_explosion_004_large_orange
 Do not redistribute the original asset pack as a standalone library.
 
 Interface font (all in-game text):
-Ark Pixel 16px (c) TakWolf
+Ark Pixel 12px (c) TakWolf
 Licensed under the SIL Open Font License 1.1.
-Subset to Latin + Cyrillic and bundled as fonts/ArkPixel16-Regular.ttf
-License: fonts/ArkPixel16-OFL.txt
+Subset to Latin + Cyrillic and bundled as fonts/ArkPixel12-Regular.ttf
+License: fonts/ArkPixel-OFL.txt
